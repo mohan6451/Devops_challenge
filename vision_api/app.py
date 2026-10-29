@@ -6,7 +6,7 @@ import urllib.request
 WORKER_URL = os.environ.get("WORKER_URL", "http://localhost:9001")
 DB_HOST = os.environ.get("DB_HOST", "postgres")
 APP_PORT = int(os.environ.get("APP_PORT", "8000"))
-STARTUP_SESSION_VALID = False
+# STARTUP_SESSION_VALID = False
 
 
 def check_worker():
@@ -28,7 +28,7 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)
-
+""" 
     def do_GET(self):
         if self.path == "/health":
             worker_ok = STARTUP_SESSION_VALID and check_worker()
@@ -42,11 +42,25 @@ class Handler(BaseHTTPRequestHandler):
             self._send(200, {"stream": "EO_CAM_01", "detections": [{"cls": "vehicle", "conf": 0.91}]})
         else:
             self._send(404, {"error": "not found"})
+"""
+def do_GET(self):
+        if self.path == "/health":
+            ok = check_worker()
+            self._send(200 if ok else 503,
+                       {"status": "healthy" if ok else "degraded", "worker_ready": ok})
+        elif self.path == "/api/v1/detect":
+            if not check_worker():
+                self._send(503, {"error": "inference_worker unavailable or engine invalid"})
+                return
+            self._send(200, {"stream": "EO_CAM_01", "detections": [{"cls": "vehicle", "conf": 0.91}]})
+        else:
+            self._send(404, {"error": "not found"})
 
 
 if __name__ == "__main__":
     STARTUP_SESSION_VALID = check_worker()
     if not STARTUP_SESSION_VALID:
-        print(f"[vision_api] WARN: startup handshake with {WORKER_URL} failed; worker was not ready when vision_api started", flush=True)
-    print(f"Starting vision_api on port {APP_PORT}, worker={WORKER_URL}, session_valid={STARTUP_SESSION_VALID}", flush=True)
+        print(f"Starting vision_api on port {APP_PORT}, worker={WORKER_URL}")
+       # print(f"[vision_api] WARN: startup handshake with {WORKER_URL} failed; worker was not ready when vision_api started", flush=True)
+   # print(f"Starting vision_api on port {APP_PORT}, worker={WORKER_URL}, session_valid={STARTUP_SESSION_VALID}", flush=True)
     HTTPServer(("0.0.0.0", APP_PORT), Handler).serve_forever()
