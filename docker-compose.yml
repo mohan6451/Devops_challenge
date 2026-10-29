@@ -2,13 +2,13 @@
   postgres:
     image: postgres:15-alpine
     environment:
-      POSTGRES_USER: c2admin
-      POSTGRES_PASSWORD: MatrixSiteProdDB#2026!
-      POSTGRES_DB: surveillance_c2
+      POSTGRES_USER: ${POSTGRES_USER:?set POSTGRES_USER in .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:?set POSTGRES_DB in .env}
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U c2admin -d surveillance_c2"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 5s
       timeout: 3s
       retries: 5
@@ -46,7 +46,7 @@
       APP_PORT: "8000"
       WORKER_URL: "http://inference_worker:9000"
       DB_HOST: "postgres"
-      DB_PASSWORD: "MatrixSiteProdDB#2026!"
+      DB_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
     ports:
       - "8000:8000"
     depends_on:
