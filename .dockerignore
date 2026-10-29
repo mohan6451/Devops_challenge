@@ -1,0 +1,8 @@
+.git
+.github
+.env
+tests
+models
+*.md
+**/__pycache__
+*.tar.gz

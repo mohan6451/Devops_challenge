@@ -21,11 +21,19 @@
     environment:
       ENGINE_PATH: /app/models/eo_detector_fp16.engine
       MANIFEST_PATH: /app/models/manifest.json
+      TRT_CACHE_DIR: /tmp/trt_cache
       WORKER_PORT: "9000"
-      AWS_SECRET_ACCESS_KEY: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+    volumes:
+      - ./models:/app/models:ro
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
     healthcheck:
-      test: ["CMD", "curl", "-fsS", "--max-time", "2", "http://127.0.0.1:9000/status"]
-      interval: 5s
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:9000/status', timeout=2)"]
+      interval: 3s
       timeout: 3s
       retries: 2
     networks:
