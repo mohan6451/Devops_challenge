@@ -36,7 +36,7 @@
     command: ["python", "vision_api/app.py"]
     environment:
       APP_PORT: "8000"
-      WORKER_URL: "http://localhost:9000"
+      WORKER_URL: "http://inference_worker:9000"
       DB_HOST: "postgres"
       DB_PASSWORD: "MatrixSiteProdDB#2026!"
     ports:
