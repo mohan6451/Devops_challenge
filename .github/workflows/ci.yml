@@ -5,25 +5,48 @@ on:
     branches: [ main ]
   pull_request:
 
+permissions:
+  contents: read
+
+env:
+  IMAGE: registry.site.local/eoir-stack
+
 jobs:
-  lint_and_test:
+  test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - name: Run unit tests
+      - name: Unit tests
+        run: python -m unittest discover -s tests -v
+      - name: Verify model artifact against manifest
         run: |
-          python -m unittest discover -s tests || true
+          expected=$(python -c "import json; print(json.load(open('models/manifest.json'))['sha256'])")
+          echo "${expected}  models/eo_detector_fp16.engine" | sha256sum -c -
+      - name: Validate compose file
+        run: docker compose --env-file .env.example config > /dev/null
 
   build_and_publish:
+    needs: test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Compute immutable tag
+        id: meta
+        run: |
+          version=$(python3 -c "import json; print(json.load(open('models/manifest.json'))['version'])")
+          echo "tag=${version}-${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
       - name: Build image
+        run: docker build -t "$IMAGE:${{ steps.meta.outputs.tag }}" .
+      - name: Check image runs as non-root
         run: |
-          docker build -t registry.site.local/eoir-stack:latest .
-      - name: Promote to defence site baseline
-        run: |
-          echo "Tagging registry.site.local/eoir-stack:latest as site-approved"
+          uid=$(docker run --rm "$IMAGE:${{ steps.meta.outputs.tag }}" id -u)
+          test "$uid" != "0"
+      - name: Log in to registry
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: echo "${{ secrets.REGISTRY_PASSWORD }}" | docker login registry.site.local -u "${{ secrets.REGISTRY_USER }}" --password-stdin
+      - name: Push (promote) immutable tag
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: docker push "$IMAGE:${{ steps.meta.outputs.tag }}"
