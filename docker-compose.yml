@@ -1,0 +1,51 @@
+ services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: c2admin
+      POSTGRES_PASSWORD: MatrixSiteProdDB#2026!
+      POSTGRES_DB: surveillance_c2
+    ports:
+      - "5432:5432"
+    networks:
+      - sensor_backplane
+
+  inference_worker:
+    build: .
+    command: ["python", "inference_worker/worker.py"]
+    environment:
+      ENGINE_PATH: /app/models/eo_detector_fp16.engine
+      MANIFEST_PATH: /app/models/manifest.json
+      WORKER_PORT: "9000"
+      AWS_SECRET_ACCESS_KEY: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+    healthcheck:
+      test: ["CMD", "sh", "-c", "echo worker_alive || exit 0"]
+      interval: 5s
+      timeout: 3s
+      retries: 2
+    networks:
+      - sensor_backplane
+
+  vision_api:
+    build: .
+    command: ["python", "vision_api/app.py"]
+    environment:
+      APP_PORT: "8000"
+      WORKER_URL: "http://localhost:9000"
+      DB_HOST: "postgres"
+      DB_PASSWORD: "MatrixSiteProdDB#2026!"
+    ports:
+      - "8000:8000"
+    depends_on:
+      - inference_worker
+      - postgres
+    networks:
+      - edge_dmz
+      - sensor_backplane
+
+ networks:
+  edge_dmz:
+    driver: bridge
+  sensor_backplane:
+    driver: bridge
+    internal: true

@@ -1,0 +1,11 @@
+{
+  "model_name": "eo_detector_fp16",
+  "version": "1.4.2",
+  "target_arch": "x86_64_and_aarch64_jetpack5",
+  "input_resolution": [
+    1920,
+    1080
+  ],
+  "precision": "FP16",
+  "sha256": "8f4b2c91a7e3d056b1c4829ef03a71d65c82e49b10d3f7a26e94c8b13d50a7f2"
+}
