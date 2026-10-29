@@ -28,22 +28,8 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)
-""" 
+
     def do_GET(self):
-        if self.path == "/health":
-            worker_ok = STARTUP_SESSION_VALID and check_worker()
-            status = "healthy" if worker_ok else "degraded"
-            code = 200 if worker_ok else 503
-            self._send(code, {"service": "vision_api", "status": status, "worker_ready": worker_ok})
-        elif self.path == "/api/v1/detect":
-            if not (STARTUP_SESSION_VALID and check_worker()):
-                self._send(503, {"error": "inference_worker unavailable or engine invalid"})
-                return
-            self._send(200, {"stream": "EO_CAM_01", "detections": [{"cls": "vehicle", "conf": 0.91}]})
-        else:
-            self._send(404, {"error": "not found"})
-"""
-def do_GET(self):
         if self.path == "/health":
             ok = check_worker()
             self._send(200 if ok else 503,
