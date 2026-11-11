@@ -3,7 +3,7 @@ import json
 import os
 import urllib.request
 
-WORKER_URL = os.environ.get("WORKER_URL", "http://localhost:9001")
+WORKER_URL = os.environ.get("WORKER_URL", "http://inference_worker:9000")
 DB_HOST = os.environ.get("DB_HOST", "postgres")
 APP_PORT = int(os.environ.get("APP_PORT", "8000"))
 # STARTUP_SESSION_VALID = False

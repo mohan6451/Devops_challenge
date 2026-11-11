@@ -16,6 +16,7 @@
       - sensor_backplane
 
   inference_worker:
+    image: eoir-stack:${RELEASE_VERSION:-1.4.2}
     build: .
     command: ["python", "inference_worker/worker.py"]
     environment:
@@ -40,6 +41,7 @@
       - sensor_backplane
 
   vision_api:
+    image: eoir-stack:${RELEASE_VERSION:-1.4.2}
     build: .
     command: ["python", "vision_api/app.py"]
     environment:
